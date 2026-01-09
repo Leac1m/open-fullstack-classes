@@ -1,7 +1,9 @@
 import axios from "axios";
-const baseUrl = "http://localhost:3001/notes";
+const baseUrl = "https://open.er-api.com/v6/latest";
 
 const getAll = () => axios.get(baseUrl).then((response) => response.data);
+
+const get = (currency) => axios.get(`${baseUrl}/${currency}`).then((response) => response.data);
 
 const update = (id, noteObject) =>
   axios.put(`${baseUrl}/${id}`, noteObject).then((response) => response.data);
@@ -12,4 +14,4 @@ const create = (noteObject) =>
 const remove = (id) =>
   axios.delete(`${baseUrl}/${id}`).then((response) => response.data);
 
-export default { getAll, create, update, remove };
+export default { getAll, get, create, update, remove };
