@@ -1,6 +1,7 @@
-require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
+const config = require('./utils/config')
+const logger = require('./utils/logger')
 
 const app = express()
 const Person = require('./models/person')
@@ -56,6 +57,5 @@ app.get('/info', (request, response) => {
 })
 
 
-const PORT = 3001
 app.listen(PORT)
-console.log(`Server running on port ${PORT}`)
+logger.info(`Server running on port ${config.PORT}`)
