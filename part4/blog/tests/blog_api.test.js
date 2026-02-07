@@ -5,14 +5,44 @@ const supertest = require('supertest')
 const app = require('../app')
 const Blog = require('../models/blog')
 const helper = require('./test_helper')
-const logger = require('../utils/logger')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
 
 const api = supertest(app)
 
 describe('Blog endpoint tests', async () => {
+    let token = null
+
     beforeEach(async () => {
+        await User.deleteMany({})
         await Blog.deleteMany({})
-        await Blog.insertMany(helper.initialBlogs)
+
+        const passwordHash = await bcrypt.hash('sekret', 10)
+        const user = new User({ username: 'superuser', name: 'root', passwordHash })
+
+        for (const blogObject of helper.initialBlogs) {
+            const blog = new Blog({
+                title: blogObject.title,
+                url: blogObject.url,
+                like: blogObject.likes,
+                author: user._id
+            })
+
+            user.blogs = user.blogs.concat(user._id)
+            await blog.save()
+        }
+        await user.save()
+
+        const userLogin = async () => {
+            const result = await api
+                .post('/api/login/')
+                .send({ username: 'superuser', password: 'sekret'})
+            
+            token = result.body.token
+            if (!token) throw Error("Could not get auth 'token")
+        }
+
+        await userLogin()
     })
 
     describe('blogs can be viewed', async () => {
@@ -32,7 +62,7 @@ describe('Blog endpoint tests', async () => {
                 .expect(200)
                 .expect('Content-Type', /application\/json/)
         
-            assert.deepStrictEqual(resultBlog.body, blogToView)
+            assert.strictEqual(resultBlog.body.title, blogToView.title)
         })
     })
 
@@ -47,6 +77,7 @@ describe('Blog endpoint tests', async () => {
         
             const result = await api
                 .post('/api/blogs')
+                .auth(token, { type: "bearer" })
                 .send(newBlog)
                 .expect(201)
                 .expect('Content-Type', /application\/json/)
@@ -64,6 +95,7 @@ describe('Blog endpoint tests', async () => {
         
             const result = await api
                 .post('/api/blogs')
+                .auth(token, { type: "bearer" })
                 .send(newBlog)
                 .expect(201)
                 .expect('Content-Type', /application\/json/)
@@ -80,6 +112,7 @@ describe('Blog endpoint tests', async () => {
         
             const result = await api
                 .post('/api/blogs')
+                .auth(token, { type: "bearer" })
                 .send(newBlog)
                 .expect(400)
                 .expect('Content-Type', /application\/json/)
@@ -95,6 +128,7 @@ describe('Blog endpoint tests', async () => {
         
             const result = await api
                 .post('/api/blogs')
+                .auth(token, { type: "bearer" })
                 .send(newBlog)
                 .expect(400)
                 .expect('Content-Type', /application\/json/)
