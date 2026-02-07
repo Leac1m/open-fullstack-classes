@@ -1,0 +1,21 @@
+###
+# @name login
+POST http://localhost:3003/api/login
+Content-Type: application/json
+
+{
+  "username": "boblogin",
+  "password": "salainen"
+}
+
+### create blog
+@accessToken = {{login.response.body.token}}
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "title": "Testing blog",
+  "url": "blog_url.com/test",
+  "likes": 6
+}
