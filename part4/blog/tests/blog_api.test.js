@@ -138,6 +138,16 @@ describe('Blog endpoint tests', async () => {
     })
     
     describe('a specific blog can updated', async () => {
+        test('a expect to fail without auth token', async () => {
+            const blogsAtStart = await helper.blogInDB()
+            const blogsToUpdate = blogsAtStart[0]
+
+            await api.put(`/api/blogs/${blogsToUpdate.id}`)
+                .expect(401)
+            
+            const blogsAtEnd = await helper.blogInDB()
+            assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+        })
         test('blog successfully updates', async () => {
             const blogsAtStart = await helper.blogInDB();
             const blogToUpdate = blogsAtStart[0]
@@ -145,6 +155,7 @@ describe('Blog endpoint tests', async () => {
             
             blogToUpdate.title = newTitle
             await api.put(`/api/blogs/${blogToUpdate.id}`)
+                .auth(token, { type: "bearer"})
                 .send(blogToUpdate)
                 .expect(200)
             
@@ -160,10 +171,33 @@ describe('Blog endpoint tests', async () => {
 
             await api.put(`/api/blogs/${blogsToUpdate.id}`)
                 .send(blogUpdate)
+                .auth(token, { type: "bearer"})
                 .expect(200)
         
             const blogsAtEnd = await helper.blogInDB()
             assert.strictEqual(blogsAtEnd[0].title, blogUpdate.title)
+        })
+    })
+
+    describe('a specific blog can delete', async () => {
+        test('blog successfully delete', async () => {
+            const blogsAtStart = await helper.blogInDB();
+            const blogToUpdate = blogsAtStart[0]
+            
+            await api.delete(`/api/blogs/${blogToUpdate.id}`)
+                .auth(token, { type: 'bearer'})
+                .expect(204)
+            
+            const blogsAtEnd = await helper.blogInDB()
+            assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
+        })
+
+        test('a expect to fail without auth token', async () => {
+            const blogsAtStart = await helper.blogInDB()
+            const blogsToUpdate = blogsAtStart[0]
+
+            await api.delete(`/api/blogs/${blogsToUpdate.id}`)
+                .expect(401)        
         })
     })
 })
